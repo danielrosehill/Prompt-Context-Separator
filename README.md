@@ -55,23 +55,53 @@ The separation agent returns:
 
 ## Prompt library
 
-Three baseline prompts (same schema, different shot counts):
+| File | Structured output | Natural-language output | Use case |
+|---|:---:|:---:|---|
+| [`system-prompts/zero-shot.md`](system-prompts/zero-shot.md) | ✅ | — | General — instructions only, no examples |
+| [`system-prompts/one-shot.md`](system-prompts/one-shot.md) | ✅ | — | General — one worked example |
+| [`system-prompts/few-shot.md`](system-prompts/few-shot.md) | ✅ | — | General — three worked examples |
+| [`system-prompts/natural-language.md`](system-prompts/natural-language.md) | — | ✅ | General — markdown output instead of JSON |
+| [`system-prompts/variants/for-targeted-inference.md`](system-prompts/variants/for-targeted-inference.md) | ✅ | — | Specific — downstream is the answering model |
+| [`system-prompts/variants/for-vector-memory.md`](system-prompts/variants/for-vector-memory.md) | ✅ | — | Specific — downstream is a vector DB |
+| [`system-prompts/variants/for-dictation.md`](system-prompts/variants/for-dictation.md) | ✅ | — | Specific — voice-typed / dictated input |
 
-| File | Description |
-|---|---|
-| [`system-prompts/zero-shot.md`](system-prompts/zero-shot.md) | No examples — instructions only. |
-| [`system-prompts/one-shot.md`](system-prompts/one-shot.md) | One worked example. |
-| [`system-prompts/few-shot.md`](system-prompts/few-shot.md) | Three worked examples covering multi-ask, prior-context, and bare-ask cases. |
+The shared structured-output contract lives in [`system-prompts/_schema.md`](system-prompts/_schema.md).
 
-Use-case variants:
+### General-purpose prompt (in full)
 
-| File | When to use |
-|---|---|
-| [`system-prompts/variants/for-targeted-inference.md`](system-prompts/variants/for-targeted-inference.md) | Downstream consumer is the answering model. Optimise for response quality. |
-| [`system-prompts/variants/for-vector-memory.md`](system-prompts/variants/for-vector-memory.md) | Downstream consumer is a vector DB. Optimise for retrieval quality. |
-| [`system-prompts/variants/for-dictation.md`](system-prompts/variants/for-dictation.md) | Input is voice-typed. Strip dictation artefacts and verbal scaffolding. |
+The simplest, model-agnostic, structured-output baseline:
 
-The shared output contract lives in [`system-prompts/_schema.md`](system-prompts/_schema.md).
+```text
+You are a prompt processing agent. Your job is to take a single user
+message and decompose it into two structural fields so that downstream
+systems can route, store, or answer the message more effectively.
+
+Separate the input into:
+
+1. `prompts` — the discrete asks. Each prompt is one self-contained
+   question or task the user is putting to the AI. If the input contains
+   multiple distinct asks, return each as its own item.
+
+2. `context` — surrounding background that grounds the asks but is not
+   itself a question: prior thinking, motivation, anecdotes, framing,
+   references to previous conversations or work. Each context chunk is
+   one discrete idea, written in the third person and prefixed with
+   `{{user}}`.
+
+Drop greetings, sign-offs, and pure filler. Light cleanup is allowed
+(fixing obvious typos or dictation artefacts). Do not paraphrase,
+summarise, or invent content. Preserve the user's original wording
+wherever possible.
+
+Return a single JSON object:
+
+{
+  "prompts": ["..."],
+  "context": ["..."]
+}
+
+No prose outside the JSON.
+```
 
 ## Reference dataset
 
